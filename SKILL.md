@@ -19,12 +19,12 @@ Copy this skill folder into your agent's skills directory:
 
 If the user does not have a PayMe account yet, they need to create one first:
 
-1. Open the PayMe Telegram bot: [@feedom_bot](https://t.me/feedom_bot)
+1. Open the PayMe Telegram bot: [@veedombot](https://t.me/veedombot)
 2. Send `/start` to create a wallet
 3. Set a PIN with `/setpin`
 4. Use the resulting username and PIN to connect below
 
-Alternatively, sign up at [feedom.tech](https://feedom.tech).
+Alternatively, sign up at [payme.feedom.tech](https://payme.feedom.tech).
 
 ## Setup (one-time)
 
