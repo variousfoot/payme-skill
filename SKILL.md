@@ -1,6 +1,8 @@
 ---
 name: payme
 description: Send and receive USDC/USDT crypto payments via PayMe smart wallets. Use when the user wants to check their crypto balance, send stablecoins to someone, view transaction history, manage contacts, sell crypto for naira via P2P, or do anything related to PayMe wallet operations. Supports Base, Arbitrum, Polygon, BNB Chain, and Avalanche.
+homepage: https://payme.feedom.tech
+source: https://github.com/variousfoot/payme-skill
 ---
 
 # PayMe - Crypto Payments Skill
@@ -174,6 +176,14 @@ This cancels auto-release and triggers admin investigation.
 POST /api/agent/p2p/orders/:id/rate
 { "rating": 5, "comment": "Fast payment" }
 ```
+
+## Security & Token Handling
+
+- **Prefer PIN login over master private key.** Use `{"identifier": "...", "pin": "..."}` for `/api/agent/connect`. Only use `masterPrivateKey` if the user explicitly provides it and understands the risk.
+- **Store the agent token securely.** Save it to an environment variable (`PAYME_AGENT_TOKEN`), a secrets manager, or an encrypted config file. Never store it in plain text in code, logs, or chat history.
+- **Tokens expire after 90 days.** Re-authenticate via `/api/agent/connect` when expired. Revoke tokens you no longer need via `POST /api/agent/revoke`.
+- **All requests go to `https://payme.feedom.tech` only.** Never send your agent token to any other domain.
+- **Test with small amounts first.** Verify the integration works before moving larger sums.
 
 ## Important Rules
 
