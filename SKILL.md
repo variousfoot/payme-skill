@@ -13,7 +13,17 @@ PayMe provides gasless USDC/USDT payments through ERC-4337 smart wallets on Base
 
 ## Installation
 
-Copy this skill folder into your agent's skills directory:
+Install from GitHub (recommended):
+```bash
+clawhub install https://github.com/variousfoot/payme-skill
+```
+
+Or from ClawHub registry:
+```bash
+clawhub install payme
+```
+
+Manual: copy this skill folder into your agent's skills directory:
 - **Codex:** `~/.codex/skills/payme/`
 - **Cursor:** `~/.cursor/skills/payme/`
 
