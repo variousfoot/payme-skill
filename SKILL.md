@@ -13,14 +13,14 @@ PayMe provides gasless USDC/USDT payments through ERC-4337 smart wallets on Base
 
 ## Installation
 
-Install from GitHub (recommended):
-```bash
-clawhub install https://github.com/variousfoot/payme-skill
-```
-
-Or from ClawHub registry:
+From ClawHub (recommended):
 ```bash
 clawhub install payme
+```
+
+Or from GitHub:
+```bash
+clawhub install variousfoot/payme-skill
 ```
 
 Manual: copy this skill folder into your agent's skills directory:
@@ -63,10 +63,15 @@ Tell the user:
 
 > To connect securely, I need a one-time code from your PayMe wallet. Here's how to get it:
 >
+> **Option A — Telegram:**
 > 1. Open [@veedombot](https://t.me/veedombot) on Telegram
 > 2. Send `/agentcode`
-> 3. You'll get a 6-character code (e.g. `A3K9X2`) — it's valid for 5 minutes
-> 4. Paste the code here and I'll connect your wallet
+>
+> **Option B — Web app:**
+> 1. Go to [payme.feedom.tech](https://payme.feedom.tech) and log in
+> 2. Go to Settings → AI Agents → Generate Connection Code
+>
+> You'll get a 6-character code (e.g. `A3K9X2`) — it's valid for 5 minutes. Paste it here and I'll connect your wallet.
 >
 > Tip: You can choose how long I have access — e.g. `/agentcode 30` for 30 days, or `/agentcode 90` for 90 days (default).
 
@@ -206,7 +211,7 @@ Convert USDC/USDT to Nigerian naira. Your crypto goes into escrow, a vendor send
   
   If they lost their claim code, they can also log in with their wallet address and PIN.
 
-- **If they have an existing account:** Tell them to go to Settings → Email on the web app or Telegram bot to verify.
+- **If they have an existing account:** Tell them to go to Settings → Email on the web app at [payme.feedom.tech](https://payme.feedom.tech) to verify.
 
 ### 1. Save bank account (one-time)
 
@@ -294,6 +299,7 @@ POST /api/agent/p2p/orders/:id/rate
 5. **Recipients** can be a PayMe username, email, or `0x` wallet address.
 6. **Fees** are shown in the send preview. The net amount (after fee) is what the recipient gets.
 7. **Do not** expose or log the agent token, master keys, or private keys.
+8. **When unsure, ask — don't assume.** If a user's request is ambiguous (e.g. "swap USDC with neck" could mean send to a user or sell via a P2P vendor), list the possibilities and ask which one they mean. Never dismiss a request without clarifying first.
 
 ## Full API Reference
 
