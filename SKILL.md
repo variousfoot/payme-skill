@@ -17,37 +17,52 @@ Copy this skill folder into your agent's skills directory:
 - **Codex:** `~/.codex/skills/payme/`
 - **Cursor:** `~/.cursor/skills/payme/`
 
-## Getting a PayMe Account
+## Connecting a User's PayMe Account
 
-If the user does not have a PayMe account yet, they need to create one first:
+When the user wants to use PayMe and you don't have a stored agent token, guide them through the connection flow below. **NEVER ask for their PIN or password.** Use a secure one-time connection code instead.
 
-1. Open the PayMe Telegram bot: [@veedombot](https://t.me/veedombot)
+### Step 1: Check if they have a PayMe account
+
+Ask: "Do you have a PayMe wallet?" If **no**, guide them to create one:
+
+1. Open [@veedombot](https://t.me/veedombot) on Telegram (or sign up at [payme.feedom.tech](https://payme.feedom.tech))
 2. Send `/start` to create a wallet
-3. Set a PIN with `/setpin`
+3. Send `/setpin` to set a security PIN
 
-Alternatively, sign up at [payme.feedom.tech](https://payme.feedom.tech).
+Once done, continue to Step 2.
 
-## Setup (one-time)
+### Step 2: Generate a connection code
 
-Connect the user's PayMe account to get an agent token. The **recommended** method is a one-time connection code — no passwords or PINs are shared with the agent.
+Tell the user:
 
-### Option A: Connection code (recommended)
+> To connect securely, I need a one-time code from your PayMe wallet. Here's how to get it:
+>
+> 1. Open [@veedombot](https://t.me/veedombot) on Telegram
+> 2. Send `/agentcode`
+> 3. You'll get a 6-character code (e.g. `A3K9X2`) — it's valid for 5 minutes
+> 4. Paste the code here and I'll connect your wallet
+>
+> Tip: You can choose how long I have access — e.g. `/agentcode 30` for 30 days, or `/agentcode 90` for 90 days (default).
 
-Ask the user to generate a code from their PayMe app:
-- **Telegram:** send `/agentcode` to [@veedombot](https://t.me/veedombot) (optionally `/agentcode 30` for 30-day access)
-- **Web:** generate a code from wallet settings
+Wait for the user to share their code. **Do not** ask for their wallet address, username, email, or PIN.
 
-The user will receive a 6-character code (e.g. `A3K9X2`) that expires in 5 minutes. Once they share the code:
+### Step 3: Exchange the code
+
+Once the user provides a code, call:
 
 ```bash
 curl -X POST https://payme.feedom.tech/api/agent/connect \
   -H "Content-Type: application/json" \
-  -d '{"code": "A3K9X2"}'
+  -d '{"code": "THE_CODE_USER_GAVE_YOU"}'
 ```
 
-### Option B: Identifier + PIN (fallback)
+If successful, you'll receive an `agentToken`. Store it securely and use it as `Authorization: Bearer <agentToken>` on all subsequent requests.
 
-If the user prefers, they can connect with their wallet address (or username) and PIN directly:
+If the code is expired or invalid, tell the user to generate a fresh one with `/agentcode`.
+
+### Fallback (only if user explicitly insists)
+
+If the user cannot access @veedombot and explicitly offers their wallet address and PIN themselves, you may use:
 
 ```bash
 curl -X POST https://payme.feedom.tech/api/agent/connect \
@@ -55,9 +70,7 @@ curl -X POST https://payme.feedom.tech/api/agent/connect \
   -d '{"identifier": "0xWALLET_ADDRESS_OR_USERNAME", "pin": "USER_PIN"}'
 ```
 
-### Response
-
-The response contains an `agentToken`. Store it and use it as `Authorization: Bearer <agentToken>` on all subsequent requests. The token lasts for the duration the user chose (default 90 days).
+**Never proactively ask for a PIN.** Only use this if the user volunteers it.
 
 ## Available Actions
 
@@ -196,7 +209,7 @@ POST /api/agent/p2p/orders/:id/rate
 
 ## Security & Token Handling
 
-- **Prefer connection codes over direct credentials.** Ask the user to run `/agentcode` and share the code. This avoids exposing their PIN. Only fall back to `{"identifier": "...", "pin": "..."}` if the user insists. Never use `masterPrivateKey` unless the user explicitly provides it.
+- **NEVER ask for PINs, passwords, or private keys.** Always guide the user to generate a connection code via `/agentcode` on @veedombot. Only use identifier+PIN if the user volunteers it unprompted.
 - **Store the agent token securely.** Save it to an environment variable (`PAYME_AGENT_TOKEN`), a secrets manager, or an encrypted config file. Never store it in plain text in code, logs, or chat history.
 - **Tokens expire based on user choice** (default 90 days, max 365). Re-authenticate via `/api/agent/connect` when expired. Revoke tokens you no longer need via `POST /api/agent/revoke`.
 - **All requests go to `https://payme.feedom.tech` only.** Never send your agent token to any other domain.
