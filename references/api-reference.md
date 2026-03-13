@@ -10,7 +10,13 @@ All authenticated endpoints require: `Authorization: Bearer <agentToken>`
 
 Connect or link a PayMe account. No auth header needed.
 
-**Request (login):**
+**Request (connection code — recommended):**
+```json
+{ "code": "A3K9X2" }
+```
+The user generates this code via `/agentcode` on the Telegram bot or from the web app. Codes are 6 characters, single-use, and expire in 5 minutes. The resulting token duration is chosen by the user when generating the code (default 90 days).
+
+**Request (identifier + PIN — fallback):**
 ```json
 { "identifier": "username, email, or 0x address", "pin": "1234" }
 ```
@@ -32,8 +38,9 @@ Connect or link a PayMe account. No auth header needed.
 
 **Errors:**
 - `400` — Missing fields
-- `401` — Invalid PIN
+- `401` — Invalid PIN or expired/invalid code
 - `404` — User not found
+- `429` — Too many attempts (5 per 15 minutes)
 
 ---
 
