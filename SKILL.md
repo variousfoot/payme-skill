@@ -194,6 +194,20 @@ Revokes the current agent token immediately.
 
 Convert USDC/USDT to Nigerian naira. Your crypto goes into escrow, a vendor sends naira to your bank, you confirm receipt, escrow releases to vendor.
 
+**Email verification required.** P2P trades require a verified email. If the API returns an email verification error, guide the user:
+
+- **If they created their account through you (agent-created):** They need to log into the web app first using their claim code. Tell them:
+  > "To verify your email, you'll need to log into the PayMe web app:
+  > 1. Go to [payme.feedom.tech](https://payme.feedom.tech)
+  > 2. On the login page, click **'Have a claim code from an AI agent?'**
+  > 3. Enter the claim code I gave you when we created your wallet
+  > 4. Once logged in, go to **Settings → Email** and verify your email
+  > 5. Come back here and we'll set up your P2P trade"
+  
+  If they lost their claim code, they can also log in with their wallet address and PIN.
+
+- **If they have an existing account:** Tell them to go to Settings → Email on the web app or Telegram bot to verify.
+
 ### 1. Save bank account (one-time)
 
 ```
