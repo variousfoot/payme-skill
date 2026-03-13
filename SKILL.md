@@ -199,19 +199,24 @@ Revokes the current agent token immediately.
 
 Convert USDC/USDT to Nigerian naira. Your crypto goes into escrow, a vendor sends naira to your bank, you confirm receipt, escrow releases to vendor.
 
-**Email verification required.** P2P trades require a verified email. If the API returns an email verification error, guide the user:
+**Email verification required.** P2P trades require a verified email. Email can ONLY be verified on the web app (NOT on Telegram). If the API returns an email verification error, tell the user exactly this:
 
-- **If they created their account through you (agent-created):** They need to log into the web app first using their claim code. Tell them:
-  > "To verify your email, you'll need to log into the PayMe web app:
-  > 1. Go to [payme.feedom.tech](https://payme.feedom.tech)
-  > 2. On the login page, click **'Have a claim code from an AI agent?'**
-  > 3. Enter the claim code I gave you when we created your wallet
-  > 4. Once logged in, go to **Settings → Email** and verify your email
-  > 5. Come back here and we'll set up your P2P trade"
-  
-  If they lost their claim code, they can also log in with their wallet address and PIN.
+> To trade P2P, you need to verify your email on the PayMe web app. Here's how:
+>
+> **Step 1 — Get a web login code:**
+> Open [@veedombot](https://t.me/veedombot) on Telegram and send `/weblogin`. You'll get a 6-character code.
+>
+> **Step 2 — Log into the web app:**
+> Go to [payme.feedom.tech](https://payme.feedom.tech). On the login page, click **"Have a claim code from an AI agent?"** and enter the code from Step 1.
+>
+> **Step 3 — Verify your email:**
+> Once logged in, go to **Settings → Email**, enter your email address, and enter the verification code sent to your inbox.
+>
+> **Step 4 — Come back here** and we'll set up your P2P trade.
+>
+> *Already have a web account?* You can also log in directly with your wallet address or username + PIN.
 
-- **If they have an existing account:** Tell them to go to Settings → Email on the web app at [payme.feedom.tech](https://payme.feedom.tech) to verify.
+Do NOT suggest verifying email on Telegram — it is not possible. Do NOT make up claim codes or say their wallet address is a claim code. Follow the steps above exactly.
 
 ### 1. Save bank account (one-time)
 
