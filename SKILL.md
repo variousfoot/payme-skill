@@ -1,6 +1,6 @@
 ---
 name: payme
-description: Send and receive USDC/USDT crypto payments via PayMe smart wallets. Use when the user wants to check their crypto balance, send stablecoins to someone, view transaction history, manage contacts, sell crypto for naira via P2P, or do anything related to PayMe wallet operations. Supports Base, Arbitrum, Polygon, BNB Chain, and Avalanche.
+description: Send and receive USDC/USDT crypto payments via PayMe smart wallets. Supports direct execute — users say "send 30 USDC to alice" and it happens instantly, no confirmation loop. Check balances, send stablecoins, view history, manage contacts, sell crypto for naira via P2P. Supports Base, Arbitrum, Polygon, BNB Chain, and Avalanche.
 homepage: https://payme.feedom.tech
 source: https://github.com/variousfoot/payme-skill
 ---
@@ -70,6 +70,17 @@ If successful, you'll receive an `agentToken`. Store it securely and use it as `
 
 If the code is expired or invalid, tell the user to generate a fresh one with `/agentcode`.
 
+### Step 4: Introduce yourself
+
+The connect response includes a `greeting` string and a `capabilities` array. **Always show these to the user after connecting** so they know what you can do — especially the direct execute feature:
+
+> "Connected to alice's PayMe wallet! Here's what I can do:
+> - Check balances across Base, Arbitrum, Polygon, BNB Chain, and Avalanche
+> - Send USDC/USDT to any PayMe username, email, or 0x address
+> - **Direct execute:** say something like 'send 30 USDC to alice' and I'll do it instantly — no extra confirmation needed
+> - Sell crypto for Naira via P2P with smart contract escrow protection
+> - View transaction history and manage saved contacts"
+
 ### Fallback (only if user explicitly insists)
 
 If the user cannot access @veedombot and explicitly offers their wallet address and PIN themselves, you may use:
@@ -94,7 +105,24 @@ GET /api/agent/balances
 
 Returns total USDC/USDT across all chains plus per-chain breakdown.
 
-### Send Payment (two-step)
+### Send Payment
+
+There are two modes: **direct execute** (recommended when the user's intent is clear) and **two-step** (when you need to show a preview first).
+
+#### Direct Execute (single call)
+
+When the user explicitly states the recipient, amount, and token (e.g. "send 30 USDC to neck"), use direct execute to complete it in one call:
+
+```
+POST /api/agent/send
+{ "recipient": "neck", "amount": 30, "token": "USDC", "execute": true }
+```
+
+Returns the `preview` (fee, chain, resolved address) **and** `txHash` together. No second call needed. Use this when the user's message contains all the details and they're clearly asking you to send.
+
+#### Two-Step (with preview)
+
+When details are ambiguous or you want to show the user a breakdown before executing:
 
 **Step 1 — Prepare:**
 
@@ -103,7 +131,7 @@ POST /api/agent/send
 { "recipient": "username, email, or 0x address", "amount": "10", "token": "USDC" }
 ```
 
-Returns a `confirmationId` and a `preview` with fee breakdown. Always show the preview to the user before confirming.
+Returns a `confirmationId` and a `preview` with fee breakdown. Show the preview to the user and ask for confirmation.
 
 **Step 2 — Confirm:**
 
@@ -113,6 +141,11 @@ POST /api/agent/confirm
 ```
 
 Returns `txHash` on success. Confirmations expire after 5 minutes.
+
+#### When to use which
+
+- **Direct execute:** user says "send 30 USDC to neck", "pay alice 10 USDT", "transfer 50 USDC to 0x..." — intent is clear, all details present
+- **Two-step:** user says "send some USDC to neck" (amount unclear), or you want to confirm the chain/fee before executing
 
 ### View Transaction History
 
@@ -227,7 +260,7 @@ POST /api/agent/p2p/orders/:id/rate
 
 ## Important Rules
 
-1. **Always confirm payments.** Never skip the two-step send flow. Show the preview (amount, fee, chain, recipient) and get explicit user approval before calling `/api/agent/confirm`.
+1. **Use direct execute when intent is clear.** If the user specifies recipient, amount, and token, use `"execute": true` to send in one call. If any detail is missing or ambiguous, use the two-step flow and show the preview before confirming.
 2. **Always preview P2P sells.** Compute amount x rate and show the naira total before calling `/api/agent/p2p/sell`. Get explicit user approval.
 3. **Confirm fiat is irreversible.** Only call `/api/agent/p2p/orders/:id/confirm` after the user verifies naira is in their bank.
 4. **Token is USDC or USDT.** No other tokens are supported.
