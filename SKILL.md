@@ -33,13 +33,29 @@ When the user wants to use PayMe and you don't have a stored agent token, guide 
 
 ### Step 1: Check if they have a PayMe account
 
-Ask: "Do you have a PayMe wallet?" If **no**, guide them to create one:
+Ask: "Do you have a PayMe wallet?"
 
-1. Open [@veedombot](https://t.me/veedombot) on Telegram (or sign up at [payme.feedom.tech](https://payme.feedom.tech))
-2. Send `/start` to create a wallet
-3. Send `/setpin` to set a security PIN
+**If yes** — skip to Step 2.
 
-Once done, continue to Step 2.
+**If no** — you can create one instantly:
+
+1. Ask the user to choose a 4-6 digit PIN
+2. Call:
+
+```
+POST /api/agent/create-account
+{ "pin": "1234" }
+```
+
+3. You'll receive an `agentToken` (store it), `kernelAddress`, `claimCode`, `greeting`, and `capabilities`
+4. Tell the user:
+   - Their wallet address
+   - Their **claim code** — they'll need this to log into the web app or Telegram bot later (valid 24 hours)
+   - **Ask them to delete the message containing their PIN** from the chat
+5. Show the `greeting` and `capabilities` to introduce what you can do
+6. You're connected — skip Steps 2-4 and start using the wallet immediately
+
+Alternatively, the user can sign up manually at [payme.feedom.tech](https://payme.feedom.tech) or via [@veedombot](https://t.me/veedombot) on Telegram, then continue to Step 2.
 
 ### Step 2: Generate a connection code
 

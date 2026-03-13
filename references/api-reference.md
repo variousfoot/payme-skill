@@ -6,6 +6,41 @@ All authenticated endpoints require: `Authorization: Bearer <agentToken>`
 
 ---
 
+## POST /api/agent/create-account
+
+Create a new PayMe wallet instantly. No auth header needed.
+
+**Request:**
+```json
+{ "pin": "1234" }
+```
+
+- `pin`: string, 4-6 digits
+
+**Response (200):**
+```json
+{
+  "agentToken": "64-char hex string",
+  "kernelAddress": "0x...",
+  "username": null,
+  "claimCode": "X9K2M7",
+  "claimExpiresIn": "24 hours",
+  "scopes": ["wallet:read", "contacts:read", "contacts:write", "payments:prepare", "payments:execute"],
+  "greeting": "Wallet created! Your address: 0x...",
+  "capabilities": ["Check balances across Base, Arbitrum, ...", "..."]
+}
+```
+
+The `claimCode` is a one-time 6-character code the user can enter on the web app ([payme.feedom.tech](https://payme.feedom.tech)) or Telegram bot to claim their account and set a username. It expires in 24 hours.
+
+Store the `agentToken` securely — it grants immediate wallet access.
+
+**Errors:**
+- `400` — Invalid PIN (must be 4-6 digits)
+- `429` — Rate limited (max 3 per hour per IP)
+
+---
+
 ## POST /api/agent/connect
 
 Connect or link a PayMe account. No auth header needed.
