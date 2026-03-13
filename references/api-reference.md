@@ -1,6 +1,6 @@
 # PayMe Agent API Reference
 
-Base URL: `https://payme.feedom.tech`
+Base URL: `https://api.feedom.tech`
 
 All authenticated endpoints require: `Authorization: Bearer <agentToken>`
 
