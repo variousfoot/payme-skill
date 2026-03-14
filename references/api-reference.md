@@ -439,6 +439,8 @@ Create a sell order. Locks crypto in escrow immediately.
 }
 ```
 
+**Rerouting:** If the assigned vendor doesn't accept within ~3 minutes, the system automatically refunds the escrow and re-locks with the next best vendor (up to 3 attempts). The order ID stays the same. Poll the order to see status changes — no action needed from the agent.
+
 **Errors:**
 - `400` — Missing fields, insufficient balance, no vendors available, email not verified
 - `400` with `suggestBridge: true` — Balance exists on wrong chain, user should bridge first
