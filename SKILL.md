@@ -56,6 +56,8 @@ POST /api/agent/create-account
      > **Web:** Go to [payme.feedom.tech](https://payme.feedom.tech). On the login page, click **"Have a claim code from an AI agent? Click here"**, paste your code, and hit **Claim Account**.
      >
      > **Telegram:** Open [@veedombot](https://t.me/veedombot) and send `/claim YOUR_CODE`.
+   - **Important re-login reminder:** The claim code is single-use. After using it, the user logs in with their **wallet address (or username, once set) + the PIN they chose**. Always tell them:
+     > Your claim code can only be used once. To log in again later, use your wallet address and the PIN you just chose. Set a username in Settings to make it easier to remember.
    - **Ask them to delete the message containing their PIN** from the chat
 5. Show the `greeting` and `capabilities` to introduce what you can do
 6. You're connected — skip Steps 2-4 and start using the wallet immediately
