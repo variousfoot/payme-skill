@@ -290,6 +290,7 @@ POST /api/agent/p2p/orders/:id/rate
 ## Security & Token Handling
 
 - **NEVER ask for PINs, passwords, or private keys.** Always guide the user to generate a connection code via `/agentcode` on @veedombot. Only use identifier+PIN if the user volunteers it unprompted.
+- **Tokens are hashed at rest.** The server stores a SHA-256 hash of the agent token — the raw token is returned only once at creation and never stored. A database breach does not expose usable tokens.
 - **Store the agent token securely.** Save it to an environment variable (`PAYME_AGENT_TOKEN`), a secrets manager, or an encrypted config file. Never store it in plain text in code, logs, or chat history.
 - **Tokens expire based on user choice** (default 90 days, max 365). Re-authenticate via `/api/agent/connect` when expired. Revoke tokens you no longer need via `POST /api/agent/revoke`.
 - **All requests go to `https://api.feedom.tech` only.** Never send your agent token to any other domain.
