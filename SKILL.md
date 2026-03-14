@@ -1,6 +1,6 @@
 ---
 name: payme
-description: Send and receive USDC/USDT crypto payments via PayMe smart wallets. Check balances, send stablecoins, view history, manage contacts, sell crypto for naira via P2P. Optional direct execute mode for users who want faster transfers. Supports Base, Arbitrum, Polygon, BNB Chain, and Avalanche.
+description: Send and receive USDC/USDT crypto payments via PayMe smart wallets. Check balances, send stablecoins, view history, manage contacts, sell crypto for naira via P2P. All payments require explicit user confirmation by default. Supports Base, Arbitrum, Polygon, BNB Chain, and Avalanche.
 homepage: https://payme.feedom.tech
 source: https://github.com/variousfoot/payme-skill
 ---
@@ -13,14 +13,16 @@ PayMe provides gasless USDC/USDT payments through ERC-4337 smart wallets on Base
 
 ## Installation
 
-Clone from GitHub:
+This skill contains only instruction files (SKILL.md, API reference, and an agent config YAML) — no executable code, scripts, or binaries.
+
+Copy the skill folder into your agent's skills directory:
+- **Codex:** `~/.codex/skills/payme/`
+- **Cursor:** `~/.cursor/skills/payme/`
+
+From GitHub:
 ```bash
 git clone https://github.com/variousfoot/payme-skill
 ```
-
-Then copy the skill folder into your agent's skills directory:
-- **Codex:** `~/.codex/skills/payme/`
-- **Cursor:** `~/.cursor/skills/payme/`
 
 Or install via ClawHub (OpenClaw agents only):
 ```bash
@@ -104,22 +106,9 @@ The connect response includes a `greeting` string and a `capabilities` array. **
 
 > "Connected to alice's PayMe wallet! Here's what I can do:
 > - Check balances across Base, Arbitrum, Polygon, BNB Chain, and Avalanche
-> - Send USDC/USDT to any PayMe username, email, or 0x address
+> - Send USDC/USDT to any PayMe username, email, or 0x address (I'll always show you a preview and ask for your OK before sending)
 > - Sell crypto for Naira via P2P with smart contract escrow protection
-> - View transaction history and manage saved contacts
-> - **Tip:** If you want faster transfers, say 'enable direct execute' and I'll skip the confirmation step when you give clear instructions."
-
-### Fallback (only if user explicitly insists)
-
-If the user cannot access @veedombot and explicitly offers their wallet address and PIN themselves, you may use:
-
-```bash
-curl -X POST https://api.feedom.tech/api/agent/connect \
-  -H "Content-Type: application/json" \
-  -d '{"identifier": "0xWALLET_ADDRESS_OR_USERNAME", "pin": "USER_PIN"}'
-```
-
-**Never proactively ask for a PIN.** Only use this if the user volunteers it.
+> - View transaction history and manage saved contacts"
 
 ## Available Actions
 
@@ -157,20 +146,25 @@ POST /api/agent/confirm
 
 Returns `txHash` on success. Confirmations expire after 5 minutes.
 
-#### Optional: Direct Execute (user enables from web app)
+#### Optional: Direct Execute (disabled by default, user-controlled)
 
-Direct execute allows payments to complete in a single API call. **You cannot enable this yourself.** The user must toggle it ON from their PayMe web app settings (Settings → AI Agents → Direct Execute).
+Direct execute allows payments to complete in a single API call. It is **disabled by default** and protected by multiple safeguards:
 
-When the user has enabled it and you pass `"execute": true`, the payment completes in one call:
+1. **Only the user can enable it** — they must toggle it ON from the PayMe web app (Settings → AI Agents → Direct Execute). The agent cannot enable it via the API.
+2. **Confirmation dialog** — when enabling, the web app shows a warning explaining the risk and requires explicit consent before activating.
+3. **The user can disable it at any time** from the same settings page, and can revoke the agent token entirely via `POST /api/agent/revoke`.
+4. **Server-side enforcement** — if the user has NOT enabled direct execute, the `execute` flag is silently ignored and the normal two-step flow is used.
+
+When enabled, passing `"execute": true` completes the payment in one call:
 
 ```
 POST /api/agent/send
 { "recipient": "neck", "amount": 30, "token": "USDC", "execute": true }
 ```
 
-Returns the `preview` **and** `txHash` together. If the user has NOT enabled direct execute in their settings, the `execute` flag is silently ignored and the normal two-step flow is used.
+Returns the `preview` **and** `txHash` together.
 
-If a user asks you to "skip confirmations" or "enable direct execute", tell them: *"You can enable direct execute from your PayMe web app settings at payme.feedom.tech → Settings → AI Agents."*
+If a user asks you to "skip confirmations" or "enable direct execute", tell them: *"You can enable direct execute from your PayMe web app settings at payme.feedom.tech → Settings → AI Agents. It's disabled by default for your safety."*
 
 ### View Transaction History
 
@@ -305,16 +299,21 @@ POST /api/agent/p2p/orders/:id/rate
 
 ## Security & Token Handling
 
-- **NEVER ask for PINs, passwords, or private keys.** The only exception is during new account creation (`/api/agent/create-account`) where the user chooses their own PIN. For connecting existing accounts, always use the one-time connection code flow — never ask for their PIN or wallet credentials.
+- **NEVER ask for PINs, passwords, or private keys.** During new account creation (`/api/agent/create-account`) the user chooses their own PIN — that is the only time a PIN appears in the conversation. For connecting existing accounts, always use the one-time connection code flow.
 - **Tokens are hashed at rest.** The server stores a SHA-256 hash of the agent token — the raw token is returned only once at creation and never stored. A database breach does not expose usable tokens.
-- **Store the agent token securely.** Save it to an environment variable (`PAYME_AGENT_TOKEN`), a secrets manager, or an encrypted config file. Never store it in plain text in code, logs, or chat history.
-- **Tokens expire based on user choice** (default 90 days, max 365). Re-authenticate via `/api/agent/connect` when expired. Revoke tokens you no longer need via `POST /api/agent/revoke`.
+- **Store the agent token in a secure, non-public location.** Recommended options (in order of preference):
+  1. Your platform's built-in secrets/credentials store (e.g. Codex secrets, OpenClaw vault)
+  2. An environment variable: `export PAYME_AGENT_TOKEN="<token>"` in a `.env` file that is `.gitignore`d
+  3. An OS keychain or encrypted config file
+  - **Never** store the token in plain text in source code, commit history, logs, or chat transcripts.
+- **Use short token lifetimes.** Choose the shortest duration that fits your use case (7 or 30 days over the 90-day default). Revoke tokens you no longer need immediately via `POST /api/agent/revoke`.
+- **Tokens expire based on user choice** (default 90 days, max 365). Re-authenticate via `/api/agent/connect` when expired.
 - **All requests go to `https://api.feedom.tech` only.** Never send your agent token to any other domain.
 - **Test with small amounts first.** Verify the integration works before moving larger sums.
 
 ## Important Rules
 
-1. **Always confirm payments by default.** Use the two-step flow (prepare → preview → confirm) for every payment. You may pass `"execute": true` for convenience, but it only takes effect if the user has enabled direct execute in their web app settings. You cannot enable it yourself.
+1. **Always require human confirmation before sending funds.** Use the two-step flow (prepare → show preview to user → wait for explicit "yes" → confirm) for every payment. Never call `/api/agent/confirm` without the user's approval in the current conversation. The `"execute": true` flag only works if the user has independently enabled direct execute in their web app settings — you cannot enable it yourself.
 2. **Always preview P2P sells.** Compute amount x rate and show the naira total before calling `/api/agent/p2p/sell`. Get explicit user approval.
 3. **Confirm fiat is irreversible.** Only call `/api/agent/p2p/orders/:id/confirm` after the user verifies naira is in their bank.
 4. **Token is USDC or USDT.** No other tokens are supported.
