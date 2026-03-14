@@ -308,4 +308,4 @@ POST /api/agent/p2p/orders/:id/rate
 
 ## Full API Reference
 
-For complete request/response schemas and error codes, see [references/api-reference.md](references/api-reference.md).
+For complete request/response schemas and error codes, see the [API Reference](https://github.com/variousfoot/payme-skill/blob/main/references/api-reference.md).
