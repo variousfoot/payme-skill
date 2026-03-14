@@ -13,19 +13,19 @@ PayMe provides gasless USDC/USDT payments through ERC-4337 smart wallets on Base
 
 ## Installation
 
-From ClawHub (recommended):
+Clone from GitHub:
+```bash
+git clone https://github.com/variousfoot/payme-skill
+```
+
+Then copy the skill folder into your agent's skills directory:
+- **Codex:** `~/.codex/skills/payme/`
+- **Cursor:** `~/.cursor/skills/payme/`
+
+Or install via ClawHub (OpenClaw agents only):
 ```bash
 clawhub install payme
 ```
-
-Or from GitHub:
-```bash
-clawhub install variousfoot/payme-skill
-```
-
-Manual: copy this skill folder into your agent's skills directory:
-- **Codex:** `~/.codex/skills/payme/`
-- **Cursor:** `~/.cursor/skills/payme/`
 
 ## Connecting a User's PayMe Account
 
@@ -50,7 +50,12 @@ POST /api/agent/create-account
 3. You'll receive an `agentToken` (store it), `kernelAddress`, `claimCode`, `greeting`, and `capabilities`
 4. Tell the user:
    - Their wallet address
-   - Their **claim code** — they'll need this to log into the web app or Telegram bot later (valid 24 hours)
+   - Their **claim code** (valid 24 hours) and exactly how to use it:
+     > To log into your wallet on the web or Telegram:
+     >
+     > **Web:** Go to [payme.feedom.tech](https://payme.feedom.tech). On the login page, click **"Have a claim code from an AI agent? Click here"**, paste your code, and hit **Claim Account**.
+     >
+     > **Telegram:** Open [@veedombot](https://t.me/veedombot) and send `/claim YOUR_CODE`.
    - **Ask them to delete the message containing their PIN** from the chat
 5. Show the `greeting` and `capabilities` to introduce what you can do
 6. You're connected — skip Steps 2-4 and start using the wallet immediately
