@@ -8,14 +8,14 @@ All authenticated endpoints require: `Authorization: Bearer <agentToken>`
 
 ## POST /api/agent/create-account
 
-Create a new PayMe wallet instantly. No auth header needed.
+Create a new PayMe wallet instantly. No auth header needed. The user chooses their own PIN — this is for their future web/Telegram login, not something the agent stores or reuses.
 
 **Request:**
 ```json
 { "pin": "1234" }
 ```
 
-- `pin`: string, 4-6 digits
+- `pin`: string, 4-6 digits (chosen by the user, ask them to delete the message after)
 
 **Response (200):**
 ```json
@@ -43,23 +43,13 @@ Store the `agentToken` securely — it grants immediate wallet access.
 
 ## POST /api/agent/connect
 
-Connect or link a PayMe account. No auth header needed.
+Connect a PayMe account using a one-time connection code. No auth header needed.
 
-**Request (connection code — recommended):**
+**Request:**
 ```json
 { "code": "A3K9X2" }
 ```
-The user generates this code via `/agentcode` on the Telegram bot or from the web app. Codes are 6 characters, single-use, and expire in 5 minutes. The resulting token duration is chosen by the user when generating the code (default 90 days).
-
-**Request (identifier + PIN — fallback):**
-```json
-{ "identifier": "username, email, or 0x address", "pin": "1234" }
-```
-
-**Request (restore by key):**
-```json
-{ "masterPrivateKey": "0x..." }
-```
+The user generates this code via `/agentcode` on the Telegram bot or from the web app at [payme.feedom.tech](https://payme.feedom.tech). Codes are 6 characters, single-use, and expire in 5 minutes. The resulting token duration is chosen by the user when generating the code (default 90 days).
 
 **Response (200):**
 ```json
@@ -72,7 +62,6 @@ The user generates this code via `/agentcode` on the Telegram bot or from the we
   "capabilities": [
     "Check balances across Base, Arbitrum, Polygon, BNB Chain, and Avalanche",
     "Send USDC/USDT to any PayMe username, email, or 0x address",
-    "Direct execute: say something like 'send 30 USDC to alice' and I'll do it instantly",
     "Sell crypto for Naira via P2P with smart contract escrow protection",
     "View transaction history and manage saved contacts"
   ]
@@ -82,9 +71,8 @@ The user generates this code via `/agentcode` on the Telegram bot or from the we
 Show the `greeting` and `capabilities` to the user after connecting.
 
 **Errors:**
-- `400` — Missing fields
-- `401` — Invalid PIN or expired/invalid code
-- `404` — User not found
+- `400` — Missing code
+- `401` — Invalid or expired code
 - `429` — Too many attempts (5 per 15 minutes)
 
 ---

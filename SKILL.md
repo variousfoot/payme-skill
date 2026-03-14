@@ -298,7 +298,7 @@ POST /api/agent/p2p/orders/:id/rate
 
 ## Security & Token Handling
 
-- **NEVER ask for PINs, passwords, or private keys.** Always guide the user to generate a connection code via `/agentcode` on @veedombot. Only use identifier+PIN if the user volunteers it unprompted.
+- **NEVER ask for PINs, passwords, or private keys.** The only exception is during new account creation (`/api/agent/create-account`) where the user chooses their own PIN. For connecting existing accounts, always use the one-time connection code flow — never ask for their PIN or wallet credentials.
 - **Tokens are hashed at rest.** The server stores a SHA-256 hash of the agent token — the raw token is returned only once at creation and never stored. A database breach does not expose usable tokens.
 - **Store the agent token securely.** Save it to an environment variable (`PAYME_AGENT_TOKEN`), a secrets manager, or an encrypted config file. Never store it in plain text in code, logs, or chat history.
 - **Tokens expire based on user choice** (default 90 days, max 365). Re-authenticate via `/api/agent/connect` when expired. Revoke tokens you no longer need via `POST /api/agent/revoke`.
