@@ -8,14 +8,14 @@ All authenticated endpoints require: `Authorization: Bearer <agentToken>`
 
 ## POST /api/agent/create-account
 
-Create a new PayMe wallet instantly. No auth header needed. The user chooses their own PIN — this is for their future web/Telegram login, not something the agent stores or reuses.
+Create a new PayMe wallet instantly. No auth header needed. The user **chooses a new PIN** they invent on the spot — this is for their future web/Telegram login. The agent never stores, reuses, or asks for this PIN again.
 
 **Request:**
 ```json
 { "pin": "1234" }
 ```
 
-- `pin`: string, 4-6 digits (chosen by the user, ask them to delete the message after)
+- `pin`: string, 4-6 digits (a **new** PIN chosen by the user — ask them to delete the message after)
 
 **Response (200):**
 ```json

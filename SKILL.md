@@ -31,7 +31,7 @@ clawhub install payme
 
 ## Connecting a User's PayMe Account
 
-When the user wants to use PayMe and you don't have a stored agent token, guide them through the connection flow below. **NEVER ask for their PIN or password.** Use a secure one-time connection code instead.
+When the user wants to use PayMe and you don't have a stored agent token, guide them through the connection flow below. **NEVER ask for an existing PIN or password.** Use a secure one-time connection code instead. (The only exception is account creation, where the user *chooses a new* PIN — see below.)
 
 ### Step 1: Check if they have a PayMe account
 
@@ -41,12 +41,12 @@ Ask: "Do you have a PayMe wallet?"
 
 **If no** — you can create one instantly:
 
-1. Ask the user to choose a 4-6 digit PIN
+1. Ask the user to **choose a new** 4-6 digit PIN (this is for their future web/Telegram login — the agent never stores or reuses it)
 2. Call:
 
 ```
 POST /api/agent/create-account
-{ "pin": "1234" }
+{ "pin": "<user-chosen PIN>" }
 ```
 
 3. You'll receive an `agentToken` (store it), `kernelAddress`, `claimCode`, `greeting`, and `capabilities`
@@ -60,7 +60,7 @@ POST /api/agent/create-account
      > **Telegram:** Open [@veedombot](https://t.me/veedombot) and send `/claim YOUR_CODE`.
    - **Important re-login reminder:** The claim code is single-use. After using it, the user logs in with their **wallet address (or username, once set) + the PIN they chose**. Always tell them:
      > Your claim code can only be used once. To log in again later, use your wallet address and the PIN you just chose. Set a username in Settings to make it easier to remember.
-   - **Ask them to delete the message containing their PIN** from the chat
+   - **Ask them to delete the message containing their chosen PIN** from the chat, or clear the chat after the current session to get rid of it
 5. Show the `greeting` and `capabilities` to introduce what you can do
 6. You're connected — skip Steps 2-4 and start using the wallet immediately
 
@@ -84,7 +84,7 @@ Tell the user:
 >
 > Tip: You can choose how long I have access — e.g. `/agentcode 30` for 30 days, or `/agentcode 90` for 90 days (default).
 
-Wait for the user to share their code. **Do not** ask for their wallet address, username, email, or PIN.
+Wait for the user to share their code. **Do not** ask for their wallet address, username, email, or existing PIN.
 
 ### Step 3: Exchange the code
 
@@ -360,14 +360,14 @@ If your platform does not provide encrypted storage, **do not use this skill** �
 - **Tokens are hashed at rest** on the server (SHA-256). The raw token is returned only once and never stored server-side. A server-side breach does not expose usable tokens.
 - All requests go to `https://api.feedom.tech` only. Never send your agent token to any other domain.
 
-### PIN Safety (Account Creation Only)
+### PIN Safety (New Account Creation Only)
 
-The `/api/agent/create-account` endpoint requires a user-chosen PIN for their future web/Telegram login. This is the **only** endpoint that handles a PIN. Mitigations:
+During account creation (`/api/agent/create-account`), the user **chooses a new PIN** for their future web/Telegram login. This is the **only** context where a PIN is handled. The agent does **not** ask for or receive an existing PIN — the user invents one on the spot.
 
 - The agent **never stores or reuses** the PIN — it is sent once in the POST body and immediately discarded.
-- **Always instruct the user to delete the chat message containing their PIN** after account creation.
-- Prefer the connection code flow for existing accounts — no PIN involved.
-- **NEVER ask for a PIN in any other context.** If a user volunteers their PIN unprompted, tell them to change it immediately.
+- **Always instruct the user to delete the chat message containing their chosen PIN**, or clear the chat after the session.
+- **Prefer the connection code flow** for existing accounts — no PIN is involved at all.
+- **NEVER ask for an existing PIN, password, or login credential in any context.** If a user shares their existing PIN unprompted, tell them to change it immediately in Settings.
 
 ### Payment Confirmation Guardrails
 
