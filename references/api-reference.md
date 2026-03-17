@@ -62,7 +62,7 @@ The user generates this code via `/agentcode` on the Telegram bot or from the we
   "capabilities": [
     "Check balances across Base, Arbitrum, Polygon, BNB Chain, and Avalanche",
     "Send USDC/USDT to any PayMe username, email, or 0x address",
-    "Sell crypto for Naira via P2P with smart contract escrow protection",
+    "Sell crypto for local currency via P2P in 10 African countries with smart contract escrow protection",
     "View transaction history and manage saved contacts"
   ]
 }
@@ -283,6 +283,30 @@ Execute a previously prepared payment.
 
 ---
 
+## GET /api/agent/search?q={query}
+
+**Scope:** `contacts:read`
+
+Search for PayMe users and saved contacts by partial name or username. Useful when the user provides a name that doesn't match exactly, or when they want to find someone.
+
+**Query params:**
+- `q` — Search query (min 2 characters). Partial, case-insensitive.
+
+**Response (200):**
+```json
+{
+  "results": [
+    { "type": "contact", "name": "chris lee", "address": "0x..." },
+    { "type": "user", "username": "chrislee", "address": "0x..." }
+  ]
+}
+```
+
+**Errors:**
+- `400` — Query too short (< 2 chars)
+
+---
+
 ## POST /api/agent/revoke
 
 Revokes the current agent token. Only requires a valid Bearer token (no scope needed).
@@ -294,9 +318,154 @@ Revokes the current agent token. Only requires a valid Bearer token (no scope ne
 
 ---
 
+# Vendor Trade Management Endpoints
+
+These endpoints are only accessible to users who are registered P2P vendors.
+
 ---
 
-# P2P Endpoints — Sell Crypto for Naira
+## GET /api/agent/vendor/orders
+
+**Scope:** `wallet:read`
+
+List orders assigned to the vendor. Returns active orders by default.
+
+**Query params:**
+- `status` (optional) — Filter: `escrow_locked`, `accepted`, `fiat_sent`, `completed`, `cancelled`, `disputed`
+
+**Response (200):**
+```json
+{
+  "orders": [
+    {
+      "orderId": "abc12345-...",
+      "status": "escrow_locked",
+      "amount": "50.00 USDC",
+      "fiat": "₦85,000",
+      "reroutes": 0,
+      "createdAt": "2026-03-17T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## POST /api/agent/vendor/orders/:id/accept
+
+**Scope:** `wallet:read`
+
+Accept a trade assigned to you. Only works on `escrow_locked` orders.
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+**Errors:**
+- Order not found, not assigned to you, or wrong status
+
+---
+
+## POST /api/agent/vendor/orders/:id/reject
+
+**Scope:** `wallet:read`
+
+Decline a trade. The order is rerouted to the next available vendor.
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+---
+
+## POST /api/agent/vendor/orders/:id/mark-paid
+
+**Scope:** `wallet:read`
+
+Mark that fiat payment has been sent to the buyer. Only works on `accepted` orders.
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+---
+
+## POST /api/agent/vendor/orders/:id/cancel
+
+**Scope:** `wallet:read`
+
+Cancel an order after accepting. Refunds buyer escrow. Warning: 3 consecutive cancellations trigger a temporary vendor cooldown.
+
+**Request (optional):**
+```json
+{ "reason": "Out of funds" }
+```
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+---
+
+# P2P Endpoints — Sell Crypto for Local Currency
+
+The P2P system supports 10 African countries: Nigeria (NGN), Ghana (GHS), Kenya (KES), South Africa (ZAR), Cameroon (XAF), Senegal (XOF), Benin (XOF), Togo (XOF), Tanzania (TZS), Uganda (UGX). Payment methods include bank transfer and mobile money (M-Pesa, MTN MoMo, Orange Money, etc.) depending on country.
+
+## GET /api/agent/p2p/countries
+
+Returns all supported countries with their currencies, payment methods, and required fields. No auth required.
+
+**Response (200):**
+```json
+{
+  "countries": [
+    {
+      "name": "Nigeria",
+      "code": "NG",
+      "currency": "NGN",
+      "currencySymbol": "₦",
+      "flag": "🇳🇬",
+      "paymentMethods": [
+        {
+          "type": "bank_transfer",
+          "provider": "Bank Transfer",
+          "fields": [
+            { "key": "bank_name", "label": "Bank Name", "placeholder": "e.g. GTBank, Kuda, Opay" },
+            { "key": "account_number", "label": "Account Number", "placeholder": "10-digit account number", "validation": "^\\d{10}$" },
+            { "key": "account_name", "label": "Account Holder Name", "placeholder": "Full name on account" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kenya",
+      "code": "KE",
+      "currency": "KES",
+      "currencySymbol": "KSh",
+      "flag": "🇰🇪",
+      "paymentMethods": [
+        {
+          "type": "mobile_money",
+          "provider": "M-Pesa",
+          "fields": [
+            { "key": "phone_number", "label": "M-Pesa Phone Number", "placeholder": "e.g. 07XXXXXXXX", "validation": "^0[17]\\d{8}$" },
+            { "key": "account_name", "label": "Registered Name", "placeholder": "Name on mobile money account" }
+          ]
+        },
+        { "type": "bank_transfer", "provider": "Bank Transfer", "fields": ["..."] }
+      ]
+    }
+  ]
+}
+```
+
+Use this to guide users through adding a payment method: show countries, then methods for their country, then collect the right fields.
+
+---
 
 ## GET /api/agent/p2p/rates
 
@@ -304,7 +473,7 @@ Public endpoint (no auth required).
 
 **Query params:**
 - `token` (optional, default `USDC`)
-- `currency` (optional, default `NGN`)
+- `currency` (optional, default `NGN`) — use the currency matching the user's country (e.g. `KES` for Kenya, `GHS` for Ghana)
 
 **Response (200):**
 ```json
@@ -345,6 +514,8 @@ Public endpoint (no auth required).
       "account_number": "0123456789",
       "account_name": "John Doe",
       "is_default": 1,
+      "country_code": "NG",
+      "method_type": "bank_transfer",
       "created_at": "2025-01-15T10:00:00Z"
     }
   ]
@@ -359,17 +530,28 @@ Public endpoint (no auth required).
 
 **Request:**
 ```json
-{ "bankName": "GTBank", "accountNumber": "0123456789", "accountName": "John Doe" }
+{
+  "bankName": "GTBank",
+  "accountNumber": "0123456789",
+  "accountName": "John Doe",
+  "countryCode": "NG",
+  "methodType": "bank_transfer"
+}
 ```
+
+- `countryCode` (optional, default `"NG"`): ISO 3166-1 alpha-2 code. Must be one of the supported countries from `/api/agent/p2p/countries`.
+- `methodType` (optional, default `"bank_transfer"`): `"bank_transfer"` or `"mobile_money"`.
+- For **mobile money**: `bankName` should be the provider name (e.g. `"M-Pesa"`, `"MTN MoMo"`) and `accountNumber` should be the phone number.
+- For **bank transfer**: `bankName` is the bank name, `accountNumber` is the bank account number.
 
 **Response (200):**
 ```json
-{ "success": true, "account": { "id": 1, "bank_name": "GTBank", "account_number": "0123456789", "account_name": "John Doe", "is_default": 1 } }
+{ "success": true, "account": { "id": 1, "bank_name": "GTBank", "account_number": "0123456789", "account_name": "John Doe", "is_default": 1, "country_code": "NG", "method_type": "bank_transfer" } }
 ```
 
 **Errors:**
-- `400` — Missing fields
-- `409` — Bank account number already registered to another user
+- `400` — Missing fields, unsupported country code, or invalid method type
+- `409` — Account number already registered to another user
 
 ---
 
@@ -386,7 +568,7 @@ Public endpoint (no auth required).
 
 ## POST /api/agent/p2p/sell
 
-Create a sell order. Locks crypto in escrow immediately.
+Create a sell order. Locks crypto in escrow immediately. The order's `fiatCurrency` is derived from the buyer's payment method country.
 
 **Scope:** `payments:prepare` + `payments:execute`
 
@@ -457,6 +639,8 @@ Create a sell order. Locks crypto in escrow immediately.
       "chain": "arbitrum",
       "vendorName": "FastPay",
       "bankName": "GTBank",
+      "bankCountryCode": "NG",
+      "bankMethodType": "bank_transfer",
       "createdAt": "2025-01-15T10:00:00Z",
       "completedAt": "2025-01-15T10:35:00Z"
     }
@@ -485,10 +669,12 @@ Create a sell order. Locks crypto in escrow immediately.
     "escrowTxHash": "0x...",
     "releaseTxHash": null,
     "vendorName": "FastPay",
-    "bankName": "GTBank",
-    "bankAccountNumber": "0123456789",
-    "bankAccountName": "John Doe",
-    "createdAt": "2025-01-15T10:00:00Z",
+      "bankName": "GTBank",
+      "bankAccountNumber": "0123456789",
+      "bankAccountName": "John Doe",
+      "bankCountryCode": "NG",
+      "bankMethodType": "bank_transfer",
+      "createdAt": "2025-01-15T10:00:00Z",
     "vendorAcceptedAt": "2025-01-15T10:02:00Z",
     "vendorPaidAt": "2025-01-15T10:15:00Z",
     "userConfirmedAt": null,
@@ -506,7 +692,7 @@ Create a sell order. Locks crypto in escrow immediately.
 
 ## POST /api/agent/p2p/orders/:id/confirm
 
-Confirm naira received. Releases escrow to vendor on-chain. **Irreversible.**
+Confirm local currency received. Releases escrow to vendor on-chain. **Irreversible.**
 
 **Scope:** `payments:execute`
 
@@ -549,6 +735,25 @@ Open a dispute. Cancels auto-release, admin investigates.
 
 ---
 
+## Currency Symbols by Country
+
+| Country | Code | Currency | Symbol |
+|---------|------|----------|--------|
+| Nigeria | NG | NGN | ₦ |
+| Ghana | GH | GHS | GH₵ |
+| Kenya | KE | KES | KSh |
+| South Africa | ZA | ZAR | R |
+| Cameroon | CM | XAF | FCFA |
+| Senegal | SN | XOF | CFA |
+| Benin | BJ | XOF | CFA |
+| Togo | TG | XOF | CFA |
+| Tanzania | TZ | TZS | TSh |
+| Uganda | UG | UGX | USh |
+
+Use the `fiatCurrency` field in order responses to determine which symbol to display.
+
+---
+
 ## POST /api/agent/p2p/orders/:id/rate
 
 Rate the vendor after a completed trade.
@@ -575,8 +780,8 @@ Rate the vendor after a completed trade.
 | Status | Meaning |
 |--------|---------|
 | `escrow_locked` | Crypto locked, waiting for vendor to accept (3 min window) |
-| `accepted` | Vendor accepted, will send naira (30 min window) |
-| `fiat_sent` | Vendor says naira was sent, check your bank |
+| `accepted` | Vendor accepted, will send local currency (30 min window) |
+| `fiat_sent` | Vendor says payment was sent, check your bank/mobile money |
 | `completed` | You confirmed receipt, escrow released to vendor |
 | `disputed` | Dispute opened, admin reviewing |
 | `cancelled` | Order cancelled or expired |
