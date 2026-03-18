@@ -61,6 +61,7 @@ POST /api/agent/create-account
    - **Important re-login reminder:** The claim code is single-use. After using it, the user logs in with their **wallet address (or username, once set) + the PIN they chose**. Always tell them:
      > Your claim code can only be used once. To log in again later, use your wallet address and the PIN you just chose. Set a username in Settings to make it easier to remember.
    - **Ask them to delete the message containing their chosen PIN** from the chat, or clear the chat after the current session to get rid of it
+   - **Suggest rotating the PIN:** "You can change your PIN anytime at payme.feedom.tech → Settings → Change PIN — good practice after sharing it in chat"
 5. Show the `greeting` and `capabilities` to introduce what you can do
 6. You're connected — skip Steps 2-4 and start using the wallet immediately
 
@@ -366,6 +367,7 @@ During account creation (`/api/agent/create-account`), the user **chooses a new 
 
 - The agent **never stores or reuses** the PIN — it is sent once in the POST body and immediately discarded.
 - **Always instruct the user to delete the chat message containing their chosen PIN**, or clear the chat after the session.
+- **Recommend rotating the PIN** after setup: tell the user they can change their PIN anytime at [payme.feedom.tech](https://payme.feedom.tech) → Settings → Change PIN. This is especially important if the PIN was shared in a chat transcript.
 - **Prefer the connection code flow** for existing accounts — no PIN is involved at all.
 - **NEVER ask for an existing PIN, password, or login credential in any context.** If a user shares their existing PIN unprompted, tell them to change it immediately in Settings.
 
