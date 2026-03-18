@@ -411,6 +411,41 @@ Cancel an order after accepting. Refunds buyer escrow. Warning: 3 consecutive ca
 
 ---
 
+## GET /api/p2p/vendor/insights
+
+**Scope:** `wallet:read` (vendor only)
+
+Returns live marketplace intelligence for the vendor dashboard: demand signal, rate competitiveness rank per token, and performance benchmarks vs peers.
+
+**Response (200):**
+```json
+{
+  "demand": {
+    "activeBuyers24h": 12,
+    "ordersLastHour": 3,
+    "avgRateUSDC": 1620,
+    "avgRateUSDT": 1615,
+    "totalOnlineVendors": 5
+  },
+  "rateRank": {
+    "USDC": { "rank": 2, "total": 8, "diff": 15 },
+    "USDT": { "rank": 1, "total": 6, "diff": null }
+  },
+  "benchmarks": {
+    "speedPercentile": 80,
+    "completionPercentile": 90,
+    "ratingPercentile": 75,
+    "missedOrders7d": 1
+  }
+}
+```
+
+- `rateRank.diff`: amount to add to your rate to reach #1 (null if already #1)
+- `benchmarks.*Percentile`: percentage of vendors you are better than (higher = better)
+- `missedOrders7d`: cancelled orders in the last 7 days
+
+---
+
 # P2P Endpoints — Sell Crypto for Local Currency
 
 The P2P system supports 10 African countries: Nigeria (NGN), Ghana (GHS), Kenya (KES), South Africa (ZAR), Cameroon (XAF), Senegal (XOF), Benin (XOF), Togo (XOF), Tanzania (TZS), Uganda (UGX). Payment methods include bank transfer and mobile money (M-Pesa, MTN MoMo, Orange Money, etc.) depending on country.
@@ -491,9 +526,13 @@ Public endpoint (no auth required).
       "maxOrderUsd": 500,
       "totalDisputes": 2,
       "disputesWon": 1,
-      "disputesLost": 1
+      "disputesLost": 1,
+      "tradesToday": 8,
+      "lastTradeAgoSecs": 120
     }
-  ]
+  ],
+  "avgSpeed": { "seconds": 180, "label": "3 minutes or less" },
+  "socialProof": { "tradesLastHour": 12, "volumeToday": 45000 }
 }
 ```
 

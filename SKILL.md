@@ -208,9 +208,12 @@ POST /api/agent/vendor/orders/:id/accept              (accept a trade)
 POST /api/agent/vendor/orders/:id/reject              (decline — reroutes to next vendor)
 POST /api/agent/vendor/orders/:id/mark-paid           (mark fiat as sent)
 POST /api/agent/vendor/orders/:id/cancel              (cancel — carries penalties)
+GET  /api/p2p/vendor/insights                         (demand pulse, rate rank, benchmarks)
 ```
 
 Vendors can say things like "reroute my trade", "I'm busy, pass this order", or "mark as paid" and the agent will use the appropriate tool.
+
+The vendor insights endpoint returns live marketplace data: active buyer count, orders per hour, rate competitiveness rank per token (with gap to #1), and performance benchmarks vs peers (speed/rating/completion percentiles). Useful when a vendor asks "how am I doing?" or "is it busy right now?".
 
 ## Sell Crypto for Local Currency (P2P)
 
