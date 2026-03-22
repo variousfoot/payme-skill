@@ -380,6 +380,17 @@ During account creation (`/api/agent/create-account`), the user **chooses a new 
 - **Server-side enforcement:** If Direct Execute is not enabled by the user, the `execute` flag is silently ignored and the normal two-step flow is used regardless.
 - The user can disable Direct Execute or revoke the agent token at any time from the web app.
 
+### Daily Agent Spending Limit
+
+- Agents are subject to a per-user daily spending cap. The default limit is **$500/day**, but users can configure it from **$10 to $10,000** in the PayMe app under **Settings > AI Agent Access > Daily spend limit**.
+- The limit applies to all agent-initiated transfers (both direct-execute and two-step confirm). It resets every 24 hours.
+- When the limit is reached, the API returns a `403` with `code: "AGENT_SPEND_LIMIT"` and includes `limit` and `remaining` fields.
+- **When you receive this error**, tell the user clearly:
+  1. Their current daily agent limit and that it has been reached
+  2. They can increase the limit in the PayMe app: **Settings > AI Agent Access > Daily spend limit** (requires their PIN)
+  3. Alternatively, they can send this payment directly from the PayMe app, which is not subject to the agent limit
+- **Do not** retry the payment or attempt to work around the limit. Wait for the user to take action.
+
 ### Testing
 
 - **Test with small amounts first** ($1-5) to verify the integration works before moving larger sums.
