@@ -839,6 +839,47 @@ Rate the vendor after a completed trade.
 - `401` — `"Invalid or expired agent token"` — token not found, expired, or revoked
 - `403` — `"Missing required scope: <scope>"` — token does not have the needed permission
 
+---
+
+## GET /api/agent/revenue-status
+
+Check the user's live revenue ownership share. Requires `wallet:read` scope.
+
+**Response (200):**
+```json
+{
+  "ownershipPct": 12.5,
+  "weight": {
+    "creditBalance": 220,
+    "rawWeight": 1.0,
+    "streakMultiplier": 1.25,
+    "effectiveWeight": 18.5,
+    "consecutiveActiveWeeks": 4,
+    "qualifyingActionsThisWeek": 3.5,
+    "daysUntilDecay": 99
+  },
+  "totalPendingUsd": 0,
+  "estimatedPayoutCurrentWeek": 10.0,
+  "currentWeekFeesUsd": 100.0,
+  "ownerPercentile": 15,
+  "totalCurrentEffectiveWeight": 148.2
+}
+```
+
+- `ownershipPct` — user's current % of the revenue pool
+- `weight.rawWeight` — activity weight (0.0 to 1.0, decays 15%/week if inactive)
+- `weight.streakMultiplier` — consecutive active weeks bonus (1.0x to 2.0x)
+- `weight.effectiveWeight` — sqrt(credits) x rawWeight x streakMultiplier
+- `weight.daysUntilDecay` — days until weight decays (99 = active this week, safe)
+- `estimatedPayoutCurrentWeek` — projected USDC based on fees collected so far
+- `ownerPercentile` — user's rank as a percentile (1 = top 1%, null = unranked)
+
+**Errors:**
+- `401` — Not authenticated
+- `403` — Missing `wallet:read` scope
+
+---
+
 ## Token Scopes
 
 | Scope | Grants |

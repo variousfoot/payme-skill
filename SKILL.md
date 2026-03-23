@@ -344,6 +344,29 @@ POST /api/agent/p2p/orders/:id/rate
 { "rating": 5, "comment": "Fast payment" }
 ```
 
+### Check Revenue Ownership
+
+```
+GET /api/agent/revenue-status
+```
+
+Returns the user's live revenue ownership share. PayMe distributes 80% of all platform fees to active users weekly in USDC.
+
+**Response includes:**
+- `ownershipPct` — user's current share of the revenue pool (e.g. `12.5` = 12.5%)
+- `weight` — activity weight (0-100%), streak multiplier, effective points
+- `estimatedPayoutCurrentWeek` — projected USDC payout this week
+- `totalPendingUsd` — unclaimed revenue ready to collect
+
+**How ownership works:**
+- Credits (from transactions, referrals, milestones) are one input — but activity matters more
+- Activity weight decays 15%/week if inactive, recovers when you transact ($5+ minimum)
+- Streak multiplier grows from 1.0x to 2.0x over 12 consecutive active weeks
+- No single user can control more than 25% of total revenue
+- Payouts are distributed every Monday UTC and claimed from the Rewards screen
+
+When users ask about ownership, earnings, or payouts, use the data from this endpoint to give them accurate, personalized answers.
+
 ## Security & Token Handling
 
 ### Mandatory Token Storage
