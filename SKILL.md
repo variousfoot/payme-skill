@@ -42,15 +42,16 @@ Ask: "Do you have a PayMe wallet?"
 **If no** — you can create one instantly:
 
 1. Ask the user to **choose a new** 6-8 digit PIN (this is for their future web/Telegram login — the agent never stores or reuses it)
-2. Call:
+2. Generate or load your own stable installation ID for this agent setup. Reuse the same ID for all later PayMe requests from this install.
+3. Call:
 
 ```
 POST /api/agent/create-account
-{ "pin": "<user-chosen PIN>" }
+{ "pin": "<user-chosen PIN>", "installationId": "<stable-installation-id>" }
 ```
 
-3. You'll receive an `agentToken` (store it), `kernelAddress`, `claimCode`, `greeting`, and `capabilities`
-4. Tell the user:
+4. You'll receive an `agentToken` (store it), `expiresAt`, `bootstrapOnly`, `kernelAddress`, `claimCode`, `greeting`, and `capabilities`
+5. Tell the user:
    - Their wallet address
    - Their **claim code** (valid 24 hours) and exactly how to use it:
      > To log into your wallet on the web or Telegram:
@@ -62,8 +63,9 @@ POST /api/agent/create-account
      > Your claim code can only be used once. To log in again later, use your wallet address and the PIN you just chose. Set a username in Settings to make it easier to remember.
    - **Ask them to delete the message containing their chosen PIN** from the chat, or clear the chat after the current session to get rid of it
    - **Suggest rotating the PIN:** "You can change your PIN anytime at payme.feedom.tech → Settings → Change PIN — good practice after sharing it in chat"
-5. Show the `greeting` and `capabilities` to introduce what you can do
-6. You're connected — skip Steps 2-4 and start using the wallet immediately
+6. Tell them this first token is **temporary bootstrap access** only. It expires quickly and cannot be refreshed.
+7. Show the `greeting` and `capabilities` to introduce what you can do
+8. You're connected for setup — but for durable access the user should still claim the account and later reconnect from PayMe Settings -> AI Agent Access
 
 Alternatively, the user can sign up manually at [payme.feedom.tech](https://payme.feedom.tech) or via [@veedombot](https://t.me/veedombot) on Telegram, then continue to Step 2.
 
@@ -79,11 +81,13 @@ Tell the user:
 >
 > **Option B — Web app:**
 > 1. Go to [payme.feedom.tech](https://payme.feedom.tech) and log in
-> 2. Go to Settings → AI Agents → Generate Connection Code
+> 2. Go to Settings → AI Agent Access
+> 3. PayMe will ask for your PIN before showing the code
+> 4. Tap **Generate Connection Code**
 >
 > You'll get a 6-character code (e.g. `A3K9X2`) — it's valid for 5 minutes. Paste it here and I'll connect your wallet.
 >
-> Tip: You can choose how long I have access — e.g. `/agentcode 30` for 30 days, or `/agentcode 90` for 90 days (default).
+> Tip: The default is 14 days. Longer 30-day and 90-day access should only be used for trusted setups you fully control.
 
 Wait for the user to share their code. **Do not** ask for their wallet address, username, email, or existing PIN.
 
@@ -94,10 +98,10 @@ Once the user provides a code, call:
 ```bash
 curl -X POST https://api.feedom.tech/api/agent/connect \
   -H "Content-Type: application/json" \
-  -d '{"code": "THE_CODE_USER_GAVE_YOU"}'
+  -d '{"code": "THE_CODE_USER_GAVE_YOU", "installationId": "<stable-installation-id>"}'
 ```
 
-If successful, you'll receive an `agentToken`. Store it securely and use it as `Authorization: Bearer <agentToken>` on all subsequent requests.
+If successful, you'll receive an `agentToken`. Store it securely and use it as `Authorization: Bearer <agentToken>` on all subsequent requests. Also send `X-Agent-Installation-Id: <stable-installation-id>` on every authenticated PayMe API call.
 
 If the code is expired or invalid, tell the user to generate a fresh one with `/agentcode`.
 
@@ -113,7 +117,9 @@ The connect response includes a `greeting` string and a `capabilities` array. **
 
 ## Available Actions
 
-All endpoints use base URL `https://api.feedom.tech` and require `Authorization: Bearer <agentToken>`.
+All endpoints use base URL `https://api.feedom.tech` and require:
+- `Authorization: Bearer <agentToken>`
+- `X-Agent-Installation-Id: <stable-installation-id>`
 
 ### Check Balances
 
@@ -390,10 +396,13 @@ If your platform does not provide encrypted storage, **do not use this skill** �
 ### Token Scope & Lifetime
 
 - **Prefer the connection code flow** (`/api/agent/connect`) over account creation. The connection code flow never exposes PINs and gives the user full control over token duration and revocation.
-- **Tokens expire in 7 days by default.** Agents can refresh before expiry via `POST /api/agent/refresh-token` (using the current token as Bearer auth) to extend by another 7 days. The user controls initial duration via `/agentcode 7` (7 days), `/agentcode 30` (30 days), etc.
+- **Token lifetime depends on how access was created.** `POST /api/agent/create-account` now returns **bootstrap access only** for roughly 30 minutes. It cannot be refreshed. The `/agentcode` -> `POST /api/agent/connect` flow defaults to 14 days, with longer 30-day and 90-day access available only when the user explicitly chooses it in PayMe. Agents can refresh an active non-bootstrap token via `POST /api/agent/refresh-token` to extend it by another 7 days.
 - **Revoke tokens immediately when no longer needed** via `POST /api/agent/revoke`.
 - **Tokens are hashed at rest** on the server (SHA-256). The raw token is returned only once and never stored server-side. A server-side breach does not expose usable tokens.
 - All requests go to `https://api.feedom.tech` only. Never send your agent token to any other domain.
+- **Bind one installation ID to one PayMe account at a time.** Reuse the same stable installation ID for every request from a given agent install. Do not rotate it per request. PayMe can reject a connect/create attempt if that installation is already linked to another account.
+- **Always tell the user when agent access expires.** `create-account`, `connect`, and `refresh-token` responses include `expiresAt`. Surface it clearly. If the user wants longer access, tell them to open the PayMe web app -> **Settings -> AI Agent Access** and generate a longer-duration code there manually. That web flow is PIN-gated.
+- **Longer durations are for advanced users only.** Recommend 30-day or 90-day access only for trusted setups the user fully controls.
 
 ### PIN Safety (New Account Creation Only)
 
