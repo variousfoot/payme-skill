@@ -41,7 +41,7 @@ Ask: "Do you have a PayMe wallet?"
 
 **If no** — you can create one instantly:
 
-1. Ask the user to **choose a new** 4-6 digit PIN (this is for their future web/Telegram login — the agent never stores or reuses it)
+1. Ask the user to **choose a new** 6-8 digit PIN (this is for their future web/Telegram login — the agent never stores or reuses it)
 2. Call:
 
 ```
@@ -189,6 +189,14 @@ GET /api/agent/wallet
 ```
 
 Returns kernel address, supported chains, and supported tokens.
+
+### Refresh Token
+
+```
+POST /api/agent/refresh-token
+```
+
+Extends the current token by 7 days. Call before expiry to maintain access. Returns `{ success: true, expiresAt: "..." }`.
 
 ### Revoke Token
 
@@ -382,7 +390,7 @@ If your platform does not provide encrypted storage, **do not use this skill** �
 ### Token Scope & Lifetime
 
 - **Prefer the connection code flow** (`/api/agent/connect`) over account creation. The connection code flow never exposes PINs and gives the user full control over token duration and revocation.
-- **Use the shortest token lifetime possible.** Request 7 or 30 days instead of the 90-day default. The user controls duration via `/agentcode 7` (7 days), `/agentcode 30` (30 days), etc.
+- **Tokens expire in 7 days by default.** Agents can refresh before expiry via `POST /api/agent/refresh-token` (using the current token as Bearer auth) to extend by another 7 days. The user controls initial duration via `/agentcode 7` (7 days), `/agentcode 30` (30 days), etc.
 - **Revoke tokens immediately when no longer needed** via `POST /api/agent/revoke`.
 - **Tokens are hashed at rest** on the server (SHA-256). The raw token is returned only once and never stored server-side. A server-side breach does not expose usable tokens.
 - All requests go to `https://api.feedom.tech` only. Never send your agent token to any other domain.
@@ -391,6 +399,7 @@ If your platform does not provide encrypted storage, **do not use this skill** �
 
 During account creation (`/api/agent/create-account`), the user **chooses a new PIN** for their future web/Telegram login. This is the **only** context where a PIN is handled. The agent does **not** ask for or receive an existing PIN — the user invents one on the spot.
 
+- PINs must be **6-8 digits** (enforced server-side). Old 4-digit PINs are blocked — users must upgrade via the web app before transacting.
 - The agent **never stores or reuses** the PIN — it is sent once in the POST body and immediately discarded.
 - **Always instruct the user to delete the chat message containing their chosen PIN**, or clear the chat after the session.
 - **Recommend rotating the PIN** after setup: tell the user they can change their PIN anytime at [payme.feedom.tech](https://payme.feedom.tech) → Settings → Change PIN. This is especially important if the PIN was shared in a chat transcript.
@@ -403,16 +412,22 @@ During account creation (`/api/agent/create-account`), the user **chooses a new 
 - **Server-side enforcement:** If Direct Execute is not enabled by the user, the `execute` flag is silently ignored and the normal two-step flow is used regardless.
 - The user can disable Direct Execute or revoke the agent token at any time from the web app.
 
-### Daily Agent Spending Limit
+### Agent Spending Limits
 
-- Agents are subject to a per-user daily spending cap. The default limit is **$500/day**, but users can configure it from **$10 to $10,000** in the PayMe app under **Settings > AI Agent Access > Daily spend limit**.
-- The limit applies to all agent-initiated transfers (both direct-execute and two-step confirm). It resets every 24 hours.
-- When the limit is reached, the API returns a `403` with `code: "AGENT_SPEND_LIMIT"` and includes `limit` and `remaining` fields.
+- **Per-transaction cap:** Individual agent transfers are capped at **$100** per transaction. For larger transfers, the user must use the web app or Telegram bot directly.
+- **Daily spending cap:** Default is **$100/day**. Users can increase this manually in the PayMe app under **Settings > AI Agent Access > Daily spend limit** (up to $10,000).
+- The limits apply to all agent-initiated transfers (both direct-execute and two-step confirm). The daily limit resets every 24 hours.
+- When a limit is reached, the API returns a `403` with `code: "AGENT_SPEND_LIMIT"` or `"AGENT_SINGLE_LIMIT"`.
 - **When you receive this error**, tell the user clearly:
-  1. Their current daily agent limit and that it has been reached
-  2. They can increase the limit in the PayMe app: **Settings > AI Agent Access > Daily spend limit** (requires their PIN)
-  3. Alternatively, they can send this payment directly from the PayMe app, which is not subject to the agent limit
+  1. Which limit was reached (per-transaction or daily)
+  2. They can increase the daily limit in the PayMe app: **Settings > AI Agent Access > Daily spend limit** (requires their PIN)
+  3. For amounts over $200, they must send directly from the PayMe app
 - **Do not** retry the payment or attempt to work around the limit. Wait for the user to take action.
+
+### Bank Account Security
+
+- Adding or removing payment methods triggers a **30-day lock** on further changes. This protects against unauthorized account swaps.
+- Bank account operations require the `payments:execute` scope.
 
 ### Testing
 

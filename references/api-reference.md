@@ -312,6 +312,19 @@ Search for PayMe users and saved contacts by partial name or username. Useful wh
 
 ---
 
+## POST /api/agent/refresh-token
+
+Extends the current agent token by 7 days. Call before the token expires to maintain access. Only requires a valid, non-revoked Bearer token.
+
+**Response (200):**
+```json
+{ "success": true, "expiresAt": "2026-04-07T12:00:00.000Z" }
+```
+
+**Error (401):** Token is invalid or revoked.
+
+---
+
 ## POST /api/agent/revoke
 
 Revokes the current agent token. Only requires a valid Bearer token (no scope needed).
@@ -358,7 +371,7 @@ List orders assigned to the vendor. Returns active orders by default.
 
 ## POST /api/agent/vendor/orders/:id/accept
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
 
 Accept a trade assigned to you. Only works on `escrow_locked` orders.
 
@@ -374,7 +387,7 @@ Accept a trade assigned to you. Only works on `escrow_locked` orders.
 
 ## POST /api/agent/vendor/orders/:id/reject
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
 
 Decline a trade. The order is rerouted to the next available vendor.
 
@@ -387,7 +400,7 @@ Decline a trade. The order is rerouted to the next available vendor.
 
 ## POST /api/agent/vendor/orders/:id/mark-paid
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
 
 Mark that fiat payment has been sent to the buyer. Only works on `accepted` orders.
 
@@ -400,7 +413,7 @@ Mark that fiat payment has been sent to the buyer. Only works on `accepted` orde
 
 ## POST /api/agent/vendor/orders/:id/cancel
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
 
 Cancel an order after accepting. Refunds buyer escrow. Warning: 3 consecutive cancellations trigger a temporary vendor cooldown.
 
@@ -570,7 +583,9 @@ Public endpoint (no auth required).
 
 ## POST /api/agent/p2p/bank-accounts
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
+
+Adding or removing a bank account triggers a **30-day lock** on further changes. This is a security measure to prevent unauthorized account swaps.
 
 **Request:**
 ```json
@@ -595,13 +610,16 @@ Public endpoint (no auth required).
 
 **Errors:**
 - `400` — Missing fields, unsupported country code, or invalid method type
+- `403` — Bank account changes are locked (30-day cooldown active)
 - `409` — Account number already registered to another user
 
 ---
 
 ## DELETE /api/agent/p2p/bank-accounts/:id
 
-**Scope:** `wallet:read`
+**Scope:** `payments:execute`
+
+Triggers a 30-day lock on further bank account changes.
 
 **Response (200):**
 ```json
