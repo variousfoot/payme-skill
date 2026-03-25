@@ -60,7 +60,7 @@ Connect a PayMe account using a one-time connection code. No auth header needed.
 ```
 `installationId` is required and must stay stable for this agent install.
 
-The user generates this code via `/agentcode` on the Telegram bot or from the web app at [payme.feedom.tech](https://payme.feedom.tech). In the web app, PayMe asks for the user's PIN before revealing the code. Codes are 6 characters, single-use, and expire in 5 minutes. The resulting token duration is chosen by the user when generating the code (default 14 days, with 30-day and 90-day access as longer explicit options).
+The user generates this code from the web app at [payme.feedom.tech](https://payme.feedom.tech). In the web app, PayMe asks for the user's PIN before revealing the code. Codes are 6 characters, single-use, and expire in 5 minutes. The resulting token duration is chosen by the user when generating the code (default 14 days, with 30-day and 90-day access as longer explicit options).
 
 **Response (200):**
 ```json
