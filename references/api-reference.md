@@ -192,10 +192,11 @@ When `execute: true`, no `/api/agent/confirm` call is needed. The preview is sti
 - `400` — Invalid amount, token, or recipient
 - `400` — Insufficient balance or no available chain
 - `403` — Missing `payments:execute` scope (when `execute: true`)
-- `403` — `AGENT_SPEND_LIMIT` — Agent daily spending limit reached. The response includes `{ code: "AGENT_SPEND_LIMIT", limit: 500, remaining: 0 }`. Tell the user they can increase their limit in the PayMe app under **Settings > AI Agent Access > Daily spend limit**, or send the payment directly from the app.
+- `403` — `AGENT_SINGLE_LIMIT` — Agent transfers are capped at $100 per transaction. Larger sends must be done in the PayMe app directly.
+- `403` — `AGENT_SPEND_LIMIT` — Agent daily spending limit reached. The response includes `{ code: "AGENT_SPEND_LIMIT", limit: 100, remaining: 0 }` by default unless the user has raised it in PayMe. Tell the user they can increase their limit in the PayMe app under **Settings > AI Agent Access > Daily spend limit**, or send the payment directly from the app.
 
 **Daily Spend Limit:**
-Agents are subject to a per-user daily spending cap (default $500/day, configurable $10–$10,000). This resets every 24 hours. When the limit is hit, both direct-execute sends and 2-step confirms will be rejected. The user must increase their limit in the PayMe app (requires their PIN) or use the app directly for that transfer.
+Agents are subject to a per-user daily spending cap (default $100/day, configurable $10–$10,000). This resets every 24 hours. When the limit is hit, both direct-execute sends and 2-step confirms will be rejected. The user must increase their limit in the PayMe app (requires their PIN) or use the app directly for that transfer.
 
 ---
 

@@ -425,7 +425,7 @@ During account creation (`/api/agent/create-account`), the user **chooses a new 
 - **When you receive this error**, tell the user clearly:
   1. Which limit was reached (per-transaction or daily)
   2. They can increase the daily limit in the PayMe app: **Settings > AI Agent Access > Daily spend limit** (requires their PIN)
-  3. For amounts over $200, they must send directly from the PayMe app
+  3. For amounts over $100, they must send directly from the PayMe app
 - **Do not** retry the payment or attempt to work around the limit. Wait for the user to take action.
 
 ### Bank Account Security
