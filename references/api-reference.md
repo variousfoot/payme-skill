@@ -319,10 +319,14 @@ Search for PayMe users and saved contacts by partial name or username. Useful wh
 {
   "results": [
     { "type": "contact", "name": "chris lee", "address": "0x..." },
-    { "type": "user", "username": "chrislee", "address": "0x..." }
+    { "type": "user", "name": "chrislee", "username": "chrislee" }
   ]
 }
 ```
+
+**Privacy note:**
+- Saved contacts may include an `address`.
+- Regular PayMe `user` results do **not** include wallet addresses. Use the username directly for sends, or ask the person to share their address themselves if one is needed.
 
 **Errors:**
 - `400` — Query too short (< 2 chars)
